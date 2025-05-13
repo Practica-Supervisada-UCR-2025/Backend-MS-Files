@@ -148,25 +148,39 @@ export class UploadService {
    * List files (if needed)
    * @returns List of files
    */
+  // src/features/uploads/services/upload.service.ts
   async listFilesService(): Promise<any[]> {
-  try {
-    // Obtener lista básica de archivos
-    const filesResponse = await this.utapi.listFiles();
-    
-    // Extraer información más detallada
-    return filesResponse.files.map(file => {
-      return {
-        name: file.name,        // Nombre original del archivo
-        key: file.key,          // Clave interna (contiene info de estructura)
-        size: file.size,        // Tamaño
-        uploadedAt: new Date(file.uploadedAt).toISOString(),  // Fecha de subida
-        customId: file.customId // ID personalizado si existe
-      };
-    });
-  } catch (error) {
-    console.error('Error listing detailed files:', error);
-    throw error;
+    try {
+      // Obtener lista básica de archivos
+      const filesResponse = await this.utapi.listFiles();
+
+      // Primero obtener todas las URLs de los archivos
+      const fileKeys = filesResponse.files.map(file => file.key);
+      const fileUrls = await this.utapi.getFileUrls(fileKeys);
+
+      // Crear un mapa de clave -> URL para fácil acceso
+      const urlMap = new Map();
+      if (fileUrls.data) {
+        fileUrls.data.forEach(item => {
+          urlMap.set(item.key, item.url);
+        });
+      }
+
+      // Extraer información más detallada
+      return filesResponse.files.map(file => {
+        return {
+          name: file.name,        // Nombre original del archivo
+          key: file.key,          // Clave interna (contiene info de estructura)
+          size: file.size,        // Tamaño
+          uploadedAt: new Date(file.uploadedAt).toISOString(),  // Fecha de subida
+          customId: file.customId, // ID personalizado si existe
+          url: urlMap.get(file.key) || `https://utfs.io/f/${file.key}` // URL completa del archivo
+        };
+      });
+    } catch (error) {
+      console.error('Error listing detailed files:', error);
+      throw error;
+    }
   }
-}
 }
 export const uploadService = new UploadService();

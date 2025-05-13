@@ -11,12 +11,11 @@ const router = Router();
 router.post(
   '/profile-image',
   authenticateJWT,
-  uploadController.determineRequestType,
+  uploadController.checkRequestType,
   uploadController.processUpload
 );
 router.get(
   '/list-files',
-  authenticateJWT,
   uploadController.listFiles
 );
 
