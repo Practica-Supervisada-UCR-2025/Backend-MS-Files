@@ -296,7 +296,8 @@ describe('UploadService', () => {
           key: 'test-key',
           size: 1024,
           uploadedAt: '2020-01-01T00:00:00.000Z',
-          customId: 'test-id'
+          customId: 'test-id',
+          url: 'https://utfs.io/f/test-key'
         }
       ]);
     });

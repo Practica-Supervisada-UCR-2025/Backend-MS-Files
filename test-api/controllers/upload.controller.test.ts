@@ -32,7 +32,7 @@ describe('Upload Controller', () => {
     jest.clearAllMocks();
   });
 
-  describe('determineRequestType', () => {
+  describe('checkRequestType', () => {
     it('should handle multipart/form-data requests (mobile clients)', () => {
       mockReq.headers = { 'content-type': 'multipart/form-data' };
       mockReq.file = {
@@ -41,30 +41,31 @@ describe('Upload Controller', () => {
         mimetype: 'image/jpeg'
       } as Express.Multer.File;
 
-      uploadController.determineRequestType(mockReq as Request, mockRes as Response, mockNext);
+      uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it('should handle non-multipart requests for admin users (web SDK)', () => {
-      mockReq.headers = { 'content-type': 'application/json' };
-      mockReq.user = { role: 'admin' };
+    it('should handle non-multipart requests correctly', () => {
+      mockReq = {
+        headers: { 'content-type': 'application/json' },
+        user: { role: 'admin' }
+      };
 
-      uploadController.determineRequestType(mockReq as Request, mockRes as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
+      expect(() => {
+        uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
+      }).toThrow('Invalid request type');
     });
 
-    it('should reject non-admin users for web SDK uploads', () => {
-      mockReq.headers = { 'content-type': 'application/json' };
-      mockReq.user = { role: 'user' };
+    it('should reject non-multipart request regardless of user role', () => {
+      mockReq = {
+        headers: { 'content-type': 'application/json' },
+        user: { role: 'user' }
+      };
 
-      uploadController.determineRequestType(mockReq as Request, mockRes as Response, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(403);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Access denied. Administrator role required to use the web SDK.'
-      });
+      expect(() => {
+        uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
+      }).toThrow('Invalid request type');
     });
 
     it('should handle file size limit errors', () => {
@@ -78,7 +79,7 @@ describe('Upload Controller', () => {
         };
       });
 
-      uploadController.determineRequestType(mockReq as Request, mockRes as Response, mockNext);
+      uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
     });
@@ -103,7 +104,7 @@ describe('Upload Controller', () => {
         method: 'direct'
       });
 
-      await uploadController.processUpload(mockReq as Request, mockRes as Response);
+      await uploadController.processUpload(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -128,7 +129,7 @@ describe('Upload Controller', () => {
 
       (uploadService.listFilesService as jest.Mock).mockResolvedValue(mockFiles);
 
-      await uploadController.listFiles(mockReq as Request, mockRes as Response);
+      await uploadController.listFiles(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -139,16 +140,13 @@ describe('Upload Controller', () => {
     });
 
    it('should handle listing errors', async () => {
-     const mockError = new Error('Listing failed');
-     (uploadService.listFilesService as jest.Mock).mockRejectedValue(mockError);
+      const mockError = new Error('Listing failed');
+      (uploadService.listFilesService as jest.Mock).mockRejectedValue(mockError);
+      
+      await uploadController.listFiles(mockReq as Request, mockRes as Response, mockNext);
 
-     await uploadController.listFiles(mockReq as Request, mockRes as Response);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
 
-     expect(mockRes.status).toHaveBeenCalledWith(500);
-     expect(mockRes.json).toHaveBeenCalledWith({
-       message: 'Error listing files',
-       error: mockError.message
-     });
    });
   });
 });

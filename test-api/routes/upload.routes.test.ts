@@ -15,9 +15,9 @@ jest.mock('../../src/features/uploads/middleware/authenticate.middleware', () =>
 // Mock the controller methods
 jest.mock('../../src/features/uploads/controllers/upload.controller', () => ({
   uploadController: {
-    determineRequestType: jest.fn((req, res, next) => next()),
-    processUpload: jest.fn((req, res) => res.json({ success: true })),
-    listFiles: jest.fn((req, res) => res.json({ files: [] }))
+    checkRequestType: jest.fn((req, res, next) => next()),
+    processUpload: jest.fn((req, res, next) => res.json({ success: true })),
+    listFiles: jest.fn((req, res, next) => res.json({ files: [] }))
   }
 }));
 
@@ -38,24 +38,27 @@ describe('Upload Routes', () => {
     it('should use authentication middleware', async () => {
       await request(app)
         .post('/api/uploads/profile-image')
-        .send({});
+        .set('Content-Type', 'multipart/form-data')
+        .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(authenticateJWT).toHaveBeenCalled();
     });
 
-    it('should call determineRequestType and processUpload middlewares', async () => {
+    it('should call checkRequestType and processUpload middlewares', async () => {
       await request(app)
         .post('/api/uploads/profile-image')
-        .send({});
+        .set('Content-Type', 'multipart/form-data')
+        .attach('file', Buffer.from('test'), 'test.jpg');
 
-      expect(uploadController.determineRequestType).toHaveBeenCalled();
+      expect(uploadController.checkRequestType).toHaveBeenCalled();
       expect(uploadController.processUpload).toHaveBeenCalled();
     });
 
     it('should respond with success when upload is processed', async () => {
       const response = await request(app)
         .post('/api/uploads/profile-image')
-        .send({});
+        .set('Content-Type', 'multipart/form-data')
+        .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ success: true });
@@ -95,19 +98,21 @@ describe('Upload Routes', () => {
 
       const response = await request(app)
         .post('/api/uploads/profile-image')
-        .send({});
+        .set('Content-Type', 'multipart/form-data')
+        .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(response.status).toBe(500);
     });
 
     it('should handle upload processing errors', async () => {
-      (uploadController.processUpload as jest.Mock).mockImplementationOnce((req, res) => {
+      (uploadController.processUpload as jest.Mock).mockImplementationOnce((req, res, next) => {
         throw new Error('Upload failed');
       });
 
       const response = await request(app)
         .post('/api/uploads/profile-image')
-        .send({});
+        .set('Content-Type', 'multipart/form-data')
+        .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(response.status).toBe(500);
     });

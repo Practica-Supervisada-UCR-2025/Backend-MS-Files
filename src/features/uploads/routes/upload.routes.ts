@@ -16,6 +16,7 @@ router.post(
 );
 router.get(
   '/list-files',
+  authenticateJWT,
   uploadController.listFiles
 );
 

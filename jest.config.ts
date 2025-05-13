@@ -1,12 +1,12 @@
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
-  testTimeout: 100000, // Set a very high timeout (100 seconds)
+  testTimeout: 5000, // 5 seconds should be enough for most tests
   preset: 'ts-jest',
   testEnvironment: 'node',
-  verbose: true,
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
+  verbose: false, // Reduce console noise
+  maxWorkers: 1, // Run tests sequentially
+  collectCoverage: false, // Only collect coverage when explicitly requested
   moduleFileExtensions: ['ts', 'js'],
   roots: ['<rootDir>/src', '<rootDir>/test-api'],
   testMatch: ['**/*.test.ts'],
