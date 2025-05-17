@@ -42,23 +42,20 @@ export const uploadController = {
       }
 
       const authReq = req as AuthenticatedRequest;
-
-      // Extract additional information
       const userId = req.body.userId || null;
       const oldImageUrl = req.body.oldImageUrl || null;
+      const fileType = typeof req.body.fileType !== 'undefined' ? parseInt(req.body.fileType, 10) : 0;
 
-      // Create file object using helper
       const fileObject = createFileObjectFromRequest(req.file);
 
-      // Call service with complete information
-      const result = await uploadService.uploadProfileImage(
+      const result = await uploadService.uploadMediaFile(
         fileObject,
         authReq.user.role,
         userId,
-        oldImageUrl
+        oldImageUrl,
+        fileType
       );
       
-      // Return response
       res.status(200).json({
         message: `Image uploaded successfully${result.method === 'presignedUrl' ? ' (using presigned URL)' : ''}`,
         fileUrl: result.fileUrl
