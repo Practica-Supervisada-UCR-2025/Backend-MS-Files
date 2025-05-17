@@ -34,11 +34,12 @@ describe('Upload Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe('POST /api/uploads/profile-image', () => {
+  describe('POST /api/uploads/upload', () => {
     it('should use authentication middleware', async () => {
       await request(app)
-        .post('/api/uploads/profile-image')
+        .post('/api/uploads/upload')
         .set('Content-Type', 'multipart/form-data')
+        .field('fileType', 1)
         .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(authenticateJWT).toHaveBeenCalled();
@@ -46,8 +47,9 @@ describe('Upload Routes', () => {
 
     it('should call checkRequestType and processUpload middlewares', async () => {
       await request(app)
-        .post('/api/uploads/profile-image')
+        .post('/api/uploads/upload')
         .set('Content-Type', 'multipart/form-data')
+        .field('fileType', 1)
         .attach('file', Buffer.from('test'), 'test.jpg');
 
       expect(uploadController.checkRequestType).toHaveBeenCalled();
@@ -56,33 +58,34 @@ describe('Upload Routes', () => {
 
     it('should respond with success when upload is processed', async () => {
       const response = await request(app)
-        .post('/api/uploads/profile-image')
+        .post('/api/uploads/upload')
         .set('Content-Type', 'multipart/form-data')
-        .attach('file', Buffer.from('test'), 'test.jpg');
+        .field('fileType', 2)
+        .attach('file', Buffer.from('test'), 'test.gif');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ success: true });
     });
   });
 
-  describe('GET /api/uploads/list-files', () => {
+  describe('GET /api/uploads/listFiles', () => {
     it('should use authentication middleware', async () => {
       await request(app)
-        .get('/api/uploads/list-files');
+        .get('/api/uploads/listFiles');
 
       expect(authenticateJWT).toHaveBeenCalled();
     });
 
     it('should call listFiles controller method', async () => {
       await request(app)
-        .get('/api/uploads/list-files');
+        .get('/api/uploads/listFiles');
 
       expect(uploadController.listFiles).toHaveBeenCalled();
     });
 
     it('should respond with empty files array', async () => {
       const response = await request(app)
-        .get('/api/uploads/list-files');
+        .get('/api/uploads/listFiles');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ files: [] });
@@ -97,7 +100,7 @@ describe('Upload Routes', () => {
       });
 
       const response = await request(app)
-        .post('/api/uploads/profile-image')
+        .post('/api/uploads/upload')
         .set('Content-Type', 'multipart/form-data')
         .attach('file', Buffer.from('test'), 'test.jpg');
 
@@ -110,7 +113,7 @@ describe('Upload Routes', () => {
       });
 
       const response = await request(app)
-        .post('/api/uploads/profile-image')
+        .post('/api/uploads/upload')
         .set('Content-Type', 'multipart/form-data')
         .attach('file', Buffer.from('test'), 'test.jpg');
 

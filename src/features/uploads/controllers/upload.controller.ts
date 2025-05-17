@@ -13,17 +13,28 @@ import {
 export const uploadController = {
   // Middleware to determine request type
   checkRequestType: (req: Request, res: Response, next: NextFunction): void => {
-    // Check if it's a multipart request (Flutter) or UploadThing SDK request (web)
     const contentType = req.headers['content-type'] || '';
 
     if (contentType.includes('multipart/form-data')) {
-      // process with multer
+      // Verifica que venga el campo mediaType en el body
       imageUpload.single('file')(req, res, (err) => {
         if (err) {
           return next(handleMulterError(err));
         }
 
-        // Verify if there's a file after processing
+        // Verifica si falta el campo mediaType
+        const mediaType = req.body.mediaType;
+        if (
+          typeof mediaType === 'undefined' ||
+          mediaType === null ||
+          mediaType === '' ||
+          isNaN(Number(mediaType)) ||
+          !Number.isInteger(Number(mediaType))
+        ) {
+          return next(new BadRequestError('mediaType (int) is required', ['MEDIA_TYPE_REQUIRED']));
+        }
+
+        // Verifica si hay archivo
         if (!req.file) {
           return next(new BadRequestError('No image file was provided', ['NO_FILE_UPLOADED']));
         }
