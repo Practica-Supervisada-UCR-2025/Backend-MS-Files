@@ -35,10 +35,11 @@ describe('Upload Controller', () => {
   describe('checkRequestType', () => {
     it('should handle multipart/form-data requests (mobile clients)', () => {
       mockReq.headers = { 'content-type': 'multipart/form-data' };
+      mockReq.body = { mediaType: 1 };
       mockReq.file = {
         buffer: Buffer.from('test'),
         originalname: 'test.jpg',
-        mimetype: 'image/jpeg'
+        mimetype: 'image/jpeg',
       } as Express.Multer.File;
 
       uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
@@ -62,14 +63,44 @@ describe('Upload Controller', () => {
         headers: { 'content-type': 'application/json' },
         user: { role: 'user' }
       };
+      mockReq.body = { mediaType: 1 };
 
       expect(() => {
         uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
       }).toThrow('Invalid request type');
     });
 
+    it('should fail if mediaType is missing', () => {
+      mockReq.headers = { 'content-type': 'multipart/form-data' };
+      mockReq.body = {}; // mediaType ausente
+      mockReq.file = {
+        buffer: Buffer.from('test'),
+        originalname: 'test.jpg',
+        mimetype: 'image/jpeg',
+      } as Express.Multer.File;
+
+      uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+    });
+
+    it('should fail if mediaType is not an integer', () => {
+      mockReq.headers = { 'content-type': 'multipart/form-data' };
+      mockReq.body = { mediaType: 'abc' }; // No es entero
+      mockReq.file = {
+        buffer: Buffer.from('test'),
+        originalname: 'test.jpg',
+        mimetype: 'image/jpeg',
+      } as Express.Multer.File;
+
+      uploadController.checkRequestType(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(BadRequestError));
+    });
+
     it('should handle file size limit errors', () => {
       mockReq.headers = { 'content-type': 'multipart/form-data' };
+      mockReq.body = { mediaType: 1 };
       const multerError = new multer.MulterError('LIMIT_FILE_SIZE');
       
       // Simulate multer error
@@ -95,11 +126,12 @@ describe('Upload Controller', () => {
         } as Express.Multer.File,
         body: {
           userId: 'test-user',
+          mediaType: 1,
         },
         user: { role: 'user' }
       };
 
-      (uploadService.uploadProfileImage as jest.Mock).mockResolvedValue({
+      (uploadService.uploadMediaFile as jest.Mock).mockResolvedValue({
         fileUrl: 'https://example.com/test.jpg',
         method: 'direct'
       });

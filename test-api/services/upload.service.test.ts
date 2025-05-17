@@ -162,7 +162,7 @@ describe('UploadService', () => {
     });
   });
   
-  describe('uploadProfileImage', () => {
+  describe('uploadMediaFile', () => {
     it('should upload profile image using direct method when it succeeds', async () => {
       // Spy on direct and presigned methods
       const directSpy = jest.spyOn(uploadService, 'uploadFileDirectly')
@@ -170,7 +170,7 @@ describe('UploadService', () => {
       const presignedSpy = jest.spyOn(uploadService, 'uploadFileWithPresignedUrl');
       
       const userId = 'test-user-123';
-      const result = await uploadService.uploadProfileImage(mockFileObject, 'admin', userId);
+      const result = await uploadService.uploadMediaFile(mockFileObject, 'admin', userId);
       
       expect(result).toEqual({
         fileUrl: 'https://uploadthing.com/f/direct-success.jpg',
@@ -200,7 +200,7 @@ describe('UploadService', () => {
         .mockResolvedValue('https://uploadthing.com/f/presigned-success.jpg');
       
       const userId = 'test-user-123';
-      const result = await uploadService.uploadProfileImage(mockFileObject, 'admin', userId);
+      const result = await uploadService.uploadMediaFile(mockFileObject, 'admin', userId);
       
       expect(result).toEqual({
         fileUrl: 'https://uploadthing.com/f/presigned-success.jpg',
@@ -221,7 +221,7 @@ describe('UploadService', () => {
       const directSpy = jest.spyOn(uploadService, 'uploadFileDirectly')
         .mockResolvedValue('https://uploadthing.com/f/success.jpg');
       
-      await uploadService.uploadProfileImage(mockFileObject, 'user');
+      await uploadService.uploadMediaFile(mockFileObject, 'user');
       
       // Verify a generated userId was used
       const metadata = directSpy.mock.calls[0][1];
@@ -233,7 +233,7 @@ describe('UploadService', () => {
       const deleteSpy = jest.spyOn(uploadService as any, 'deleteOldProfileImage');
       
       const oldImageUrl = 'https://uploadthing.com/f/old-image.jpg';
-      await uploadService.uploadProfileImage(mockFileObject, 'admin', 'test-user', oldImageUrl);
+      await uploadService.uploadMediaFile(mockFileObject, 'admin', 'test-user', oldImageUrl);
       
       expect(deleteSpy).toHaveBeenCalledWith(oldImageUrl);
     });
@@ -245,7 +245,7 @@ describe('UploadService', () => {
       jest.spyOn(uploadService, 'uploadFileWithPresignedUrl')
         .mockRejectedValue(new Error('Presigned URL upload failed'));
       
-      await expect(uploadService.uploadProfileImage(mockFileObject, 'admin'))
+      await expect(uploadService.uploadMediaFile(mockFileObject, 'admin'))
         .rejects.toThrow('Presigned URL upload failed');
     });
   });
