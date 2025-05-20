@@ -85,16 +85,26 @@ export class UploadService {
    * @param metadata Additional metadata for the upload
    * @returns URL of the uploaded file and method used
    */
-  public async uploadProfileImage(fileObject: FileObject, userRole: string, userId?: string, oldImageUrl?: string): Promise<{ fileUrl: string, method: string }> {
+  public async uploadMediaFile(fileObject: FileObject, userRole: string, userId?: string, oldImageUrl?: string, imageType: number = 0): Promise<{ fileUrl: string, method: string }> {
     try {
-      // Usar un directorio específico para perfiles
-      const fileName = `profiles/${userId || `user-${Date.now()}`}/${Date.now()}-${fileObject.fileName}`;
+
+      let directory = 'profiles';
+      let fileType = 'profile-image';
+      if (imageType === 1) {
+        directory = 'posts';
+        fileType = 'post-image';
+      } else if (imageType === 2) {
+        directory = 'gifs';
+        fileType = 'post-gif';
+      }
+
+    const fileName = `${directory}/${userId || `user-${Date.now()}`}/${Date.now()}-${fileObject.fileName}`;
 
       // Preparar metadata con información adicional
       const metadata = {
         userId: userId || `user-${Date.now()}`,
         userRole: userRole,
-        fileType: 'profile-image'
+        fileType: fileType
       };
 
       let fileUrl: string;

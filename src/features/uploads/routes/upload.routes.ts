@@ -5,17 +5,17 @@ import { authenticateJWT } from '../middleware/authenticate.middleware';
 const router = Router();
 
 /**
- * Unified endpoint for profile image uploads
+ * Unified endpoint for image uploads
  * Handles both web clients (using UploadThing SDK) and mobile (Flutter)
  */
 router.post(
-  '/profile-image',
+  '/upload',
   authenticateJWT,
   uploadController.checkRequestType,
   uploadController.processUpload
 );
 router.get(
-  '/list-files',
+  '/listFiles',
   authenticateJWT,
   uploadController.listFiles
 );
