@@ -1,6 +1,10 @@
 import { UTApi } from "uploadthing/server";
 import { FileObject } from "../interfaces/file.interface";
 
+const PROTECTED_IMAGES = [
+  'https://utfs.io/f/Ri7z8Bp5NkcuKusSJHzg7svjdQTeVIL2qyOpRG9W4XnzUto6'
+];
+
 export class UploadService {
   private utapi: UTApi;
 
@@ -98,7 +102,7 @@ export class UploadService {
         fileType = 'post-gif';
       }
 
-    const fileName = `${directory}/${userId || `user-${Date.now()}`}/${Date.now()}-${fileObject.fileName}`;
+      const fileName = `${directory}/${userId || `user-${Date.now()}`}/${Date.now()}-${fileObject.fileName}`;
 
       // Preparar metadata con información adicional
       const metadata = {
@@ -135,6 +139,11 @@ export class UploadService {
 
   private async deleteOldProfileImage(fileUrl: string): Promise<void> {
     try {
+
+      if (PROTECTED_IMAGES.includes(fileUrl)) {
+        console.log('Protected default image detected - skipping deletion');
+        return;
+      }
       // Extraer el fileKey de la URL
       // Las URLs de UploadThing suelen tener un formato como:
       // https://uploadthing.com/f/abc123-file.jpg

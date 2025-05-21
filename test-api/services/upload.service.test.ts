@@ -78,6 +78,34 @@ describe('UploadService', () => {
     
     
     
+    it('should use custom filename when provided', async () => {
+      const metadata = { userId: 'test-user', userRole: 'admin' };
+      const customFileName = 'custom-file.jpg';
+      
+      await uploadService.uploadFileDirectly(mockFileObject, metadata, customFileName);
+      
+      const utapiInstance = (UTApi as jest.Mock).mock.results[0].value;
+      expect(utapiInstance.uploadFiles).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: customFileName
+          })
+        ]),
+        metadata
+      );
+    });
+
+    it('should throw an error if response structure is invalid', async () => {
+      const metadata = { userId: 'test-user', userRole: 'admin' };
+      
+      // Mock invalid response structure
+      const utapiInstance = (UTApi as jest.Mock).mock.results[0].value;
+      utapiInstance.uploadFiles.mockResolvedValueOnce([{ data: {} }]);
+      
+      await expect(uploadService.uploadFileDirectly(mockFileObject, metadata))
+        .rejects.toThrow('Error uploading file');
+    });
+
     it('should throw an error if upload fails', async () => {
       const metadata = { userId: 'test-user', userRole: 'admin' };
       
@@ -250,6 +278,38 @@ describe('UploadService', () => {
     });
   });
   
+    it('should handle post image type', async () => {
+      jest.spyOn(uploadService, 'uploadFileDirectly')
+        .mockResolvedValue('https://uploadthing.com/f/post-image.jpg');
+      
+      const result = await uploadService.uploadMediaFile(mockFileObject, 'admin', 'test-user', undefined, 1);
+      
+      expect(result.fileUrl).toBe('https://uploadthing.com/f/post-image.jpg');
+      expect(uploadService.uploadFileDirectly).toHaveBeenCalledWith(
+        mockFileObject,
+        expect.objectContaining({
+          fileType: 'post-image'
+        }),
+        expect.stringContaining('posts/test-user')
+      );
+    });
+
+    it('should handle gif image type', async () => {
+      jest.spyOn(uploadService, 'uploadFileDirectly')
+        .mockResolvedValue('https://uploadthing.com/f/post-gif.gif');
+      
+      const result = await uploadService.uploadMediaFile(mockFileObject, 'admin', 'test-user', undefined, 2);
+      
+      expect(result.fileUrl).toBe('https://uploadthing.com/f/post-gif.gif');
+      expect(uploadService.uploadFileDirectly).toHaveBeenCalledWith(
+        mockFileObject,
+        expect.objectContaining({
+          fileType: 'post-gif'
+        }),
+        expect.stringContaining('gifs/test-user')
+      );
+    });
+  
   describe('deleteOldProfileImage', () => {
     it('should extract fileKey from URL and call deleteFiles', async () => {
       // Access the private method
@@ -264,6 +324,24 @@ describe('UploadService', () => {
     
     
     
+    it('should not delete protected images', async () => {
+      const deleteOldProfileImage = (uploadService as any).deleteOldProfileImage.bind(uploadService);
+      const utapiInstance = (UTApi as jest.Mock).mock.results[0].value;
+      
+      await deleteOldProfileImage('https://utfs.io/f/Ri7z8Bp5NkcuKusSJHzg7svjdQTeVIL2qyOpRG9W4XnzUto6');
+      
+      expect(utapiInstance.deleteFiles).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty fileKey from URL', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const deleteOldProfileImage = (uploadService as any).deleteOldProfileImage.bind(uploadService);
+      
+      await deleteOldProfileImage('https://example.com/');
+      expect(consoleSpy).toHaveBeenCalledWith('Could not extract fileKey from URL:', 'https://example.com/');
+      consoleSpy.mockRestore();
+    });
+
     it('should catch and log errors from deleteFiles', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       const testError = new Error('Delete failed');
