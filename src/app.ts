@@ -18,21 +18,21 @@ if (result.error) {
 }
 
 // Check if UPLOADTHING_TOKEN is defined
-if (!process.env.UPLOADTHING_TOKEN) {
-  console.error("UPLOADTHING_TOKEN is not defined in environment variables");
+// if (!process.env.UPLOADTHING_TOKEN) {
+//   console.error("UPLOADTHING_TOKEN is not defined in environment variables");
   
-  // Check if .env file exists and show its content for debugging
-  const envPath = path.resolve(process.cwd(), '.env');
-  console.log(".env path:", envPath);
-  console.log(".env exists:", fs.existsSync(envPath));
+//   // Check if .env file exists and show its content for debugging
+//   const envPath = path.resolve(process.cwd(), '.env');
+//   console.log(".env path:", envPath);
+//   console.log(".env exists:", fs.existsSync(envPath));
   
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    console.log(".env content:", envContent);
-  }
-} else {
-  console.log("UPLOADTHING_TOKEN is defined correctly");
-}
+//   if (fs.existsSync(envPath)) {
+//     const envContent = fs.readFileSync(envPath, 'utf8');
+//     console.log(".env content:", envContent);
+//   }
+// } else {
+//   console.log("UPLOADTHING_TOKEN is defined correctly");
+// }
 
 
 const app = express();
