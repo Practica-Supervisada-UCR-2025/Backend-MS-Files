@@ -1,6 +1,6 @@
 import { UTApi } from "uploadthing/server";
 import { FileObject } from "../interfaces/file.interface";
-
+import { File } from 'undici';
 const PROTECTED_IMAGES = [
   'https://utfs.io/f/Ri7z8Bp5NkcuKusSJHzg7svjdQTeVIL2qyOpRG9W4XnzUto6'
 ];

@@ -244,6 +244,34 @@ describe('UploadService', () => {
       const presignedPath = presignedSpy.mock.calls[0][1];
       expect(directPath).toBe(presignedPath);
     });
+
+    it('should log fallback attempt when direct upload fails', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      // Make direct upload fail and presigned succeed
+      jest.spyOn(uploadService, 'uploadFileDirectly')
+        .mockRejectedValue(new Error('Direct upload failed'));
+      jest.spyOn(uploadService, 'uploadFileWithPresignedUrl')
+        .mockResolvedValue('https://uploadthing.com/f/presigned-success.jpg');
+      
+      await uploadService.uploadMediaFile(mockFileObject, 'admin');
+      
+      expect(consoleSpy).toHaveBeenCalledWith('Direct upload failed. Trying with presigned URL...');
+      consoleSpy.mockRestore();
+    });
+
+    it('should log upload success with method information', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      jest.spyOn(uploadService, 'uploadFileDirectly')
+        .mockResolvedValue('https://uploadthing.com/f/success.jpg');
+      
+      await uploadService.uploadMediaFile(mockFileObject, 'admin', 'test-user');
+      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'File uploaded by admin using direct method: https://uploadthing.com/f/success.jpg'
+      );
+      consoleSpy.mockRestore();
+    });
     
     it('should generate a userId if not provided', async () => {
       const directSpy = jest.spyOn(uploadService, 'uploadFileDirectly')
@@ -275,6 +303,23 @@ describe('UploadService', () => {
       
       await expect(uploadService.uploadMediaFile(mockFileObject, 'admin'))
         .rejects.toThrow('Presigned URL upload failed');
+    });
+
+    it('should log error when upload fails', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const error = new Error('Upload failed');
+      
+      // Make both upload methods fail
+      jest.spyOn(uploadService, 'uploadFileDirectly')
+        .mockRejectedValue(error);
+      jest.spyOn(uploadService, 'uploadFileWithPresignedUrl')
+        .mockRejectedValue(error);
+      
+      await expect(uploadService.uploadMediaFile(mockFileObject, 'admin'))
+        .rejects.toThrow();
+      
+      expect(consoleSpy).toHaveBeenCalledWith('Error in uploadProfileImage:', error);
+      consoleSpy.mockRestore();
     });
   });
   
@@ -378,6 +423,24 @@ describe('UploadService', () => {
           url: 'https://utfs.io/f/test-key'
         }
       ]);
+    });
+
+    it('should handle missing data in fileUrls response', async () => {
+      const utapiInstance = (UTApi as jest.Mock).mock.results[0].value;
+      utapiInstance.getFileUrls.mockResolvedValueOnce({});  // No data field
+      
+      const result = await uploadService.listFilesService();
+      
+      expect(result[0].url).toBe('https://utfs.io/f/test-key');  // Should use fallback URL
+    });
+
+    it('should handle empty urlMap', async () => {
+      const utapiInstance = (UTApi as jest.Mock).mock.results[0].value;
+      utapiInstance.getFileUrls.mockResolvedValueOnce({ data: [] });  // Empty data array
+      
+      const result = await uploadService.listFilesService();
+      
+      expect(result[0].url).toBe('https://utfs.io/f/test-key');  // Should use fallback URL
     });
     
     it('should handle and propagate errors', async () => {
