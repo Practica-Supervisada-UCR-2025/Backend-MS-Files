@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Setting the working directory in the container, to where things will be copied to and run from
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN npm install --save-dev @types/yup
 RUN npm run build
 
 # Lightweight production image
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
 
 # Set working directory
 WORKDIR /app
